@@ -16,12 +16,12 @@
 
 		<!-- Header -->
 			<header id="header">
-				<a href="index.html" class="title">Hyperspace</a>
+				<a href="index.html" class="title">Biram Bawo</a>
 				<nav>
 					<ul>
 						<li><a href="index.html">Home</a></li>
-						<li><a href="generic.html">Generic</a></li>
-						<li><a href="elements.html"  class="active">Elements</a></li>
+						<li><a href="generic.html">Project Description</a></li>
+						<li><a href="elements.html"  class="active">Code</a></li>
 					</ul>
 				</nav>
 			</header>
@@ -32,309 +32,267 @@
 				<!-- Main -->
 					<section id="main" class="wrapper">
 						<div class="inner">
-							<h1 class="major">Elements</h1>
+							<h1 class="major">Main Code</h1>
 
 							<!-- Text -->
 								<section>
-									<h2>Text</h2>
-									<p>This is <b>bold</b> and this is <strong>strong</strong>. This is <i>italic</i> and this is <em>emphasized</em>.
-									This is <sup>superscript</sup> text and this is <sub>subscript</sub> text.
-									This is <u>underlined</u> and this is code: <code>for (;;) { ... }</code>. Finally, <a href="#">this is a link</a>.</p>
-									<hr />
-									<p>Nunc lacinia ante nunc ac lobortis. Interdum adipiscing gravida odio porttitor sem non mi integer non faucibus ornare mi ut ante amet placerat aliquet. Volutpat eu sed ante lacinia sapien lorem accumsan varius montes viverra nibh in adipiscing blandit tempus accumsan.</p>
-									<hr />
-									<h2>Heading Level 2</h2>
-									<h3>Heading Level 3</h3>
-									<h4>Heading Level 4</h4>
-									<hr />
-									<h3>Blockquote</h3>
-									<blockquote>Fringilla nisl. Donec accumsan interdum nisi, quis tincidunt felis sagittis eget tempus euismod. Vestibulum ante ipsum primis in faucibus vestibulum. Blandit adipiscing eu felis iaculis volutpat ac adipiscing accumsan faucibus. Vestibulum ante ipsum primis in faucibus lorem ipsum dolor sit amet nullam adipiscing eu felis.</blockquote>
-									<h3>Preformatted</h3>
-									<pre><code>i = 0;
+									
+									<pre><code>import sys
+import time
+import math 
+import serial
+import pickle
+from struct import unpack
+import threading
+import numpy as np
+import socket as socket
+import tensorflow as tf
+from graph import Graph
+import RPi.GPIO as GPIO
+from picamera import PiCamera
+from picamera.array import PiRGBArray
+from keras.models import load_model
+from keras.preprocessing import image
+GPIO.setwarnings(False)
+GPIO.setmode(GPIO.BCM)
+# define pi GPIO
+GPIO_TRIGGER = 23
 
-while (!deck.isInOrder()) {
-    print 'Iteration ' + i;
-    deck.shuffle();
-    i++;
-}
+GPIO_ECHO0 = 22
+GPIO_ECHO1 = 24
 
-print 'It took ' + i + ' iterations to sort the deck.';</code></pre>
+# output pin: Trigger
+GPIO.setup(GPIO_TRIGGER,GPIO.OUT)
+# input pin: Echo
+GPIO.setup(GPIO_ECHO0,GPIO.IN)
+GPIO.setup(GPIO_ECHO1,GPIO.IN)
+# initialize trigger pin to low
+GPIO.output(GPIO_TRIGGER, False)
+
+def distance_sensor():
+    
+
+    GPIO.output(GPIO_TRIGGER, True)
+    time.sleep(0.00001)
+    GPIO.output(GPIO_TRIGGER, False)
+    start = time.time()
+
+    while GPIO.input(GPIO_ECHO0)==0:
+        start = time.time()
+    while GPIO.input(GPIO_ECHO1)==0:
+        start = time.time()
+        
+    while GPIO.input(GPIO_ECHO0)==1:
+        stop = time.time()
+    while GPIO.input(GPIO_ECHO1)==1:
+        stop = time.time()
+
+
+    elapsed = stop-start
+    distance = (elapsed * 34300)/2
+
+    return distance
+
+class packet_processing(object):
+
+    def __init__(self, packet):
+       self.startx1,self.starty1, self.loc1, self.x1, self.y1,self.startx2,self.starty2, self.loc2, self.x2, self.y2= unpack('<bbbiibbbii',packet)
+    def location_type(self):
+        return (self.loc1)
+
+    def x_coordinate(self):
+        return (self.x1)
+
+    def y_coordinate(self):
+        return (self.y1)
+
+class MainNeuralnetwork():
+    def __init__(self):
+         self.model = load_model("mymodel.h5")
+
+    def prediction(self, image):
+        return (self.model.predict(image))
+
+    #processing image before feeding to model for prediction
+    def image_processing(image):
+        img = image.load_img(image, target_size = (width, height))
+        img_tensor = image.img_to_array(img)
+        img_tensor = np.expand_dims(img_tensor, axis = 0)
+        img_tensor /= 255.
+
+        return img_tensor
+
+class signNetwork():
+    def __init__(self, modelname):
+        self.model_s = load_model(str(modelname))
+
+    #detect obj_type
+    def detect_sign(frame):
+        frame = self.preprocess(frame)
+        prediction = self.model_s.predict(frame)
+        return prediction[0]
+
+    def preprocess(frame):
+        return(np.array(frame).reshape(frame.shape[0], 50, 50, 3).astype('float32')/255.0 )
+
+
+class Main(object):
+    def __init__(self):
+       
+
+        self.ser = serial.Serial('/dev/ttyACM0', 115200, timeout = 1)
+        self.fmaps = open('new_reduced_features.pkl', 'rb')
+        self.feautre_map = pickle.load(self.fmaps)
+
+
+        self.camera = PiCamera()
+        self.network = MainNeuralnetwork()
+        self.directions = Graph('data.txt')
+        self.sensor_d = distance_sensor() 
+        self.sign = signNetwork('trafficsigns.h5')
+        self.direction_list = self.directions.get_directions(1, 1, 0)
+        self.current_vertex = 1   #starting_vertex
+        self.taxi_destination_index = 0
+        self.main = threading.Thread(target= self.coordinate_server, args = ('192.168.1.100', 9999))
+        
+
+        
+        client = threading.Thread(target= self.coordinate_server, args = ('192.168.1.100',9999 ))
+        client.start()
+        try:
+            self.camera.resolution = (320, 240)      # pi camera resolution
+            self.camera.framerate = 10 
+            rawCapture = PiRGBArray(self.camera, size=(320, 240))             # 10 frames/sec
+            time.sleep(1)  
+            ### process the angle to arduino executable form
+            for index in range(len(self.direction_list)):
+                try:
+                    print ('hey you')
+                    vertex, angle, distance = self.direction_list[index]
+                    start_time = time.time()
+                    total_stop_time  = 0
+                    self.current_vertex = vertex
+                    self.ser.write(encode('f', angle))
+                    for foo in self.camera.capture_continuous(rawCapture, format = "bgr", use_video_port = True):
+                        image = foo.array
+                        roi = image[120:240, :]
+                        strng_prcssd_img  = self.network.image_processing(roi)
+                        steering = self.network.prediction(strng_prcssd_img)
+                        obj_type = self.sign.detect_sign(image) #image detection size - 50x50
+
+                        current_dist = (time.time()-start_time - total_stop_time)*1.025
+
+                        if((distance - current_dist <=0.10*distance) or (distance - current_dist >=0.9*distance)):
+                            steering = angle     #process this to arduino executable
+                        if int(steering) in self.feautre_map:
+                            steering = int(steering)
+                        else:
+                            steering = int(steering)+1
+
+                        if (distance_sensor()  <= 40):
+                            self.ser.write('s'+str(self.feautre_map[steering]))
+                            rawCapture.truncate(0)
+                            continue
+
+                       
+                        if(obj_type == 6):       #indicating red                       
+                            self.ser.write('s'+str(self.feautre_map[steering]))
+                        elif(obj_type == 5):   #indicating Green
+                            self.ser.write('f'+str(self.feautre_map[steering]))
+                        elif(obj_type == 4 ):   # D-sign
+                            self.ser.write('s'+str(self.feautre_map[steering]))
+                            time.sleep(5)
+                            total_stop_time += 5
+                        elif(obj_type == 3 and self.direction_list[index+1][1] > 45):   #NoRightTurn
+                            self.direction_list = self.directions.remove_edge(vertex, self.direction_list[index+1][0])
+
+                        elif(obj_type == 2 and self.direction_list[index+1][1] < -45):   #NoLeftTurn
+                            self.direction_list = self.directions.remove_edge(vertex, self.direction_list[index+1][0])
+                        elif(obj_type == 1):  #No parking
+                            pass
+                        elif(obj_type == 0):#No entry
+                            self.direction_list = self.directions.remove_edge(vertex, self.direction_list[index+1][0])
+                        else:
+                            self.ser.write('f'+str(self.feautre_map[steering]))
+
+
+
+                        if (hasattr(self, taxi_task) and len(self.taxi_task) == 4 and  self.taxi_destination_index == 0 ):
+                                self.direction_list = direction_list.get_direction(current_vertex, taxi_task[taxi_destination_index], angle)
+                                self.taxi_destination_index += 1
+                                index = 0
+                                break
+
+                        if(hasattr(self, taxi_task) and  index == len(self.direction_list)-1):
+                            self.direction_list = direction_list.get_direction(current_vertex, taxi_task[taxi_destination_index], angle)
+                            self.taxi_destination_index += 1
+                            index = 0
+                            break
+
+                            if (current_dist == distance):
+                                self.ser.write('s'+str(self.feautre_map[steering]))
+                                break
+                            rawCapture.truncate(0)
+
+                except IndexError:
+                        pass
+        finally:
+                GPIO.cleanup()
+                "Round ended over !"
+
+    def coordinate_server(self, ip_adress, port):
+        packetList = []
+        while True:
+            client =  socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            client.connect((ip_adress, port))
+            data = client.recv(1024)
+        
+            if data != "":
+                packetList.append(data)
+
+            if len(packetList) == 2:
+                break
+
+            pkt1 = packet_processing(packetList[0])
+            pkt2 =  packet_processing(packetList[1])
+        if(pkt1.location_type() == 0 and pkt2.location_type() == 1):
+            self.directions.eval_line_equations(pkt1.x_coordinate(), pkt1.y_coordinate())
+            v1, v2 = self.directions.pickup_dropoff_vertices()
+            self.directions.eval_line_equations(pkt2.x_coordinate(), pkt2.y_coordinate())
+            v3, v4 = self.directions.pickup_dropoff_vertices()
+            self.taxi_task = [v1, v2, v3, v4]
+        elif(pkt1.location_type() == 1 and pkt2.location_type() == 0):
+            self.directions.eval_line_equations(pkt2.x_coordinate(), pkt2.y_coordinate())
+            v1, v2 = self.directions.pickup_dropoff_vertices()
+            self.directions.eval_line_equations(pkt1.x_coordinate(), pkt1.y_coordinate())
+            v3, v4 = self.directions.pickup_dropoff_vertices()
+            self.taxi_task = [v1, v2, v3, v4]
+        else:
+            print"packet error !"
+            
+
+if __name__ == '__main__':
+    Main()</code></pre>
 								</section>
 
 							<!-- Lists -->
 								<section>
-									<h2>Lists</h2>
-									<div class="row">
-										<div class="col-6 col-12-medium">
-											<h3>Unordered</h3>
-											<ul>
-												<li>Dolor pulvinar etiam.</li>
-												<li>Sagittis adipiscing.</li>
-												<li>Felis enim feugiat.</li>
-											</ul>
-											<h3>Alternate</h3>
-											<ul class="alt">
-												<li>Dolor pulvinar etiam.</li>
-												<li>Sagittis adipiscing.</li>
-												<li>Felis enim feugiat.</li>
-											</ul>
-										</div>
-										<div class="col-6 col-12-medium">
-											<h3>Ordered</h3>
-											<ol>
-												<li>Dolor pulvinar etiam.</li>
-												<li>Etiam vel felis viverra.</li>
-												<li>Felis enim feugiat.</li>
-												<li>Dolor pulvinar etiam.</li>
-												<li>Etiam vel felis lorem.</li>
-												<li>Felis enim et feugiat.</li>
-											</ol>
-											<h3>Icons</h3>
-											<ul class="icons">
-												<li><a href="#" class="icon brands fa-twitter"><span class="label">Twitter</span></a></li>
-												<li><a href="#" class="icon brands fa-facebook-f"><span class="label">Facebook</span></a></li>
-												<li><a href="#" class="icon brands fa-instagram"><span class="label">Instagram</span></a></li>
-												<li><a href="#" class="icon brands fa-github"><span class="label">Github</span></a></li>
-											</ul>
-										</div>
-									</div>
-									<h2>Actions</h2>
-									<div class="row">
+									
+									
+									<div class="row" style='float:right'>
 										<div class="col-6 col-12-medium">
 											<ul class="actions">
-												<li><a href="#" class="button primary">Default</a></li>
-												<li><a href="#" class="button">Default</a></li>
+												<li><a target="_blank"  href="https://github.com/bbawo/Robot---Taxi" class="button primary">Source Code</a></li>
+												
 											</ul>
-											<ul class="actions small">
-												<li><a href="#" class="button primary small">Small</a></li>
-												<li><a href="#" class="button small">Small</a></li>
-											</ul>
-											<ul class="actions stacked">
-												<li><a href="#" class="button primary">Default</a></li>
-												<li><a href="#" class="button">Default</a></li>
-											</ul>
-											<ul class="actions stacked">
-												<li><a href="#" class="button primary small">Small</a></li>
-												<li><a href="#" class="button small">Small</a></li>
-											</ul>
+											
+											
 										</div>
-										<div class="col-6 col-12-medium">
-											<ul class="actions stacked">
-												<li><a href="#" class="button primary fit">Default</a></li>
-												<li><a href="#" class="button fit">Default</a></li>
-											</ul>
-											<ul class="actions stacked">
-												<li><a href="#" class="button primary small fit">Small</a></li>
-												<li><a href="#" class="button small fit">Small</a></li>
-											</ul>
-										</div>
+										
 									</div>
 								</section>
+</br>
 
-							<!-- Table -->
-								<section>
-									<h2>Table</h2>
-									<h3>Default</h3>
-									<div class="table-wrapper">
-										<table>
-											<thead>
-												<tr>
-													<th>Name</th>
-													<th>Description</th>
-													<th>Price</th>
-												</tr>
-											</thead>
-											<tbody>
-												<tr>
-													<td>Item One</td>
-													<td>Ante turpis integer aliquet porttitor.</td>
-													<td>29.99</td>
-												</tr>
-												<tr>
-													<td>Item Two</td>
-													<td>Vis ac commodo adipiscing arcu aliquet.</td>
-													<td>19.99</td>
-												</tr>
-												<tr>
-													<td>Item Three</td>
-													<td> Morbi faucibus arcu accumsan lorem.</td>
-													<td>29.99</td>
-												</tr>
-												<tr>
-													<td>Item Four</td>
-													<td>Vitae integer tempus condimentum.</td>
-													<td>19.99</td>
-												</tr>
-												<tr>
-													<td>Item Five</td>
-													<td>Ante turpis integer aliquet porttitor.</td>
-													<td>29.99</td>
-												</tr>
-											</tbody>
-											<tfoot>
-												<tr>
-													<td colspan="2"></td>
-													<td>100.00</td>
-												</tr>
-											</tfoot>
-										</table>
-									</div>
-
-									<h3>Alternate</h3>
-									<div class="table-wrapper">
-										<table class="alt">
-											<thead>
-												<tr>
-													<th>Name</th>
-													<th>Description</th>
-													<th>Price</th>
-												</tr>
-											</thead>
-											<tbody>
-												<tr>
-													<td>Item One</td>
-													<td>Ante turpis integer aliquet porttitor.</td>
-													<td>29.99</td>
-												</tr>
-												<tr>
-													<td>Item Two</td>
-													<td>Vis ac commodo adipiscing arcu aliquet.</td>
-													<td>19.99</td>
-												</tr>
-												<tr>
-													<td>Item Three</td>
-													<td> Morbi faucibus arcu accumsan lorem.</td>
-													<td>29.99</td>
-												</tr>
-												<tr>
-													<td>Item Four</td>
-													<td>Vitae integer tempus condimentum.</td>
-													<td>19.99</td>
-												</tr>
-												<tr>
-													<td>Item Five</td>
-													<td>Ante turpis integer aliquet porttitor.</td>
-													<td>29.99</td>
-												</tr>
-											</tbody>
-											<tfoot>
-												<tr>
-													<td colspan="2"></td>
-													<td>100.00</td>
-												</tr>
-											</tfoot>
-										</table>
-									</div>
-								</section>
-
-							<!-- Buttons -->
-								<section>
-									<h3>Buttons</h3>
-									<ul class="actions">
-										<li><a href="#" class="button primary">Primary</a></li>
-										<li><a href="#" class="button">Default</a></li>
-									</ul>
-									<ul class="actions">
-										<li><a href="#" class="button large">Large</a></li>
-										<li><a href="#" class="button">Default</a></li>
-										<li><a href="#" class="button small">Small</a></li>
-									</ul>
-									<ul class="actions fit">
-										<li><a href="#" class="button primary fit">Fit</a></li>
-										<li><a href="#" class="button fit">Fit</a></li>
-										<li><a href="#" class="button fit">Fit</a></li>
-									</ul>
-									<ul class="actions fit small">
-										<li><a href="#" class="button primary fit small">Fit + Small</a></li>
-										<li><a href="#" class="button fit small">Fit + Small</a></li>
-										<li><a href="#" class="button fit small">Fit + Small</a></li>
-									</ul>
-									<ul class="actions">
-										<li><a href="#" class="button primary icon solid fa-download">Icon</a></li>
-										<li><a href="#" class="button icon solid fa-upload">Icon</a></li>
-										<li><a href="#" class="button icon solid fa-save">Icon</a></li>
-									</ul>
-									<ul class="actions">
-										<li><span class="button primary disabled">Disabled</span></li>
-										<li><span class="button disabled">Disabled</span></li>
-									</ul>
-								</section>
-
-							<!-- Form -->
-								<section>
-									<h2>Form</h2>
-									<form method="post" action="#">
-										<div class="row gtr-uniform">
-											<div class="col-6 col-12-xsmall">
-												<input type="text" name="demo-name" id="demo-name" value="" placeholder="Name" />
-											</div>
-											<div class="col-6 col-12-xsmall">
-												<input type="email" name="demo-email" id="demo-email" value="" placeholder="Email" />
-											</div>
-											<div class="col-12">
-												<select name="demo-category" id="demo-category">
-													<option value="">- Category -</option>
-													<option value="1">Manufacturing</option>
-													<option value="1">Shipping</option>
-													<option value="1">Administration</option>
-													<option value="1">Human Resources</option>
-												</select>
-											</div>
-											<div class="col-4 col-12-small">
-												<input type="radio" id="demo-priority-low" name="demo-priority" checked>
-												<label for="demo-priority-low">Low</label>
-											</div>
-											<div class="col-4 col-12-small">
-												<input type="radio" id="demo-priority-normal" name="demo-priority">
-												<label for="demo-priority-normal">Normal</label>
-											</div>
-											<div class="col-4 col-12-small">
-												<input type="radio" id="demo-priority-high" name="demo-priority">
-												<label for="demo-priority-high">High</label>
-											</div>
-											<div class="col-6 col-12-small">
-												<input type="checkbox" id="demo-copy" name="demo-copy">
-												<label for="demo-copy">Email me a copy</label>
-											</div>
-											<div class="col-6 col-12-small">
-												<input type="checkbox" id="demo-human" name="demo-human" checked>
-												<label for="demo-human">Not a robot</label>
-											</div>
-											<div class="col-12">
-												<textarea name="demo-message" id="demo-message" placeholder="Enter your message" rows="6"></textarea>
-											</div>
-											<div class="col-12">
-												<ul class="actions">
-													<li><input type="submit" value="Send Message" class="primary" /></li>
-													<li><input type="reset" value="Reset" /></li>
-												</ul>
-											</div>
-										</div>
-									</form>
-								</section>
-
-							<!-- Image -->
-								<section>
-									<h2>Image</h2>
-									<h3>Fit</h3>
-									<div class="box alt">
-										<div class="row gtr-uniform">
-											<div class="col-12"><span class="image fit"><img src="images/pic04.jpg" alt="" /></span></div>
-											<div class="col-4"><span class="image fit"><img src="images/pic01.jpg" alt="" /></span></div>
-											<div class="col-4"><span class="image fit"><img src="images/pic02.jpg" alt="" /></span></div>
-											<div class="col-4"><span class="image fit"><img src="images/pic03.jpg" alt="" /></span></div>
-											<div class="col-4"><span class="image fit"><img src="images/pic03.jpg" alt="" /></span></div>
-											<div class="col-4"><span class="image fit"><img src="images/pic01.jpg" alt="" /></span></div>
-											<div class="col-4"><span class="image fit"><img src="images/pic02.jpg" alt="" /></span></div>
-											<div class="col-4"><span class="image fit"><img src="images/pic02.jpg" alt="" /></span></div>
-											<div class="col-4"><span class="image fit"><img src="images/pic03.jpg" alt="" /></span></div>
-											<div class="col-4"><span class="image fit"><img src="images/pic01.jpg" alt="" /></span></div>
-										</div>
-									</div>
-									<h3>Left &amp; Right</h3>
-									<p><span class="image left"><img src="images/pic05.jpg" alt="" /></span>Fringilla nisl. Donec accumsan interdum nisi, quis tincidunt felis sagittis eget. tempus euismod. Vestibulum ante ipsum primis in faucibus vestibulum. Blandit adipiscing eu felis iaculis volutpat ac adipiscing accumsan eu faucibus. Integer ac pellentesque praesent tincidunt felis sagittis eget. tempus euismod. Vestibulum ante ipsum primis in faucibus vestibulum. Blandit adipiscing eu felis iaculis volutpat ac adipiscing accumsan eu faucibus. Integer ac pellentesque praesent. Donec accumsan interdum nisi, quis tincidunt felis sagittis eget. tempus euismod. Vestibulum ante ipsum primis in faucibus vestibulum. Blandit adipiscing eu felis iaculis volutpat ac adipiscing accumsan eu faucibus. Integer ac pellentesque praesent tincidunt felis sagittis eget. tempus euismod. Vestibulum ante ipsum primis in faucibus vestibulum. Blandit adipiscing eu felis iaculis volutpat ac adipiscing accumsan eu faucibus. Integer ac pellentesque praesent. Blandit adipiscing eu felis iaculis volutpat ac adipiscing accumsan eu faucibus. Integer ac pellentesque praesent tincidunt felis sagittis eget. tempus euismod. Vestibulum ante ipsum primis in faucibus vestibulum. Blandit adipiscing eu felis iaculis volutpat ac adipiscing accumsan eu faucibus. Integer ac pellentesque praesent.</p>
-									<p><span class="image right"><img src="images/pic06.jpg" alt="" /></span>Fringilla nisl. Donec accumsan interdum nisi, quis tincidunt felis sagittis eget. tempus euismod. Vestibulum ante ipsum primis in faucibus vestibulum. Blandit adipiscing eu felis iaculis volutpat ac adipiscing accumsan eu faucibus. Integer ac pellentesque praesent tincidunt felis sagittis eget. tempus euismod. Vestibulum ante ipsum primis in faucibus vestibulum. Blandit adipiscing eu felis iaculis volutpat ac adipiscing accumsan eu faucibus. Integer ac pellentesque praesent. Donec accumsan interdum nisi, quis tincidunt felis sagittis eget. tempus euismod. Vestibulum ante ipsum primis in faucibus vestibulum. Blandit adipiscing eu felis iaculis volutpat ac adipiscing accumsan eu faucibus. Integer ac pellentesque praesent tincidunt felis sagittis eget. tempus euismod. Vestibulum ante ipsum primis in faucibus vestibulum. Blandit adipiscing eu felis iaculis volutpat ac adipiscing accumsan eu faucibus. Integer ac pellentesque praesent. Blandit adipiscing eu felis iaculis volutpat ac adipiscing accumsan eu faucibus. Integer ac pellentesque praesent tincidunt felis sagittis eget. tempus euismod. Vestibulum ante ipsum primis in faucibus vestibulum. Blandit adipiscing eu felis iaculis volutpat ac adipiscing accumsan eu faucibus. Integer ac pellentesque praesent.</p>
-								</section>
 
 						</div>
 					</section>

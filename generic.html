@@ -11,17 +11,54 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
 		<link rel="stylesheet" href="assets/css/main.css" />
 		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+		
+		<style>
+		
+		
+	.clearfix:after {
+    content:"\0020";
+    display:block;
+    height:0;
+    clear:both;
+    visibility:hidden;
+    overflow:hidden;
+}
+ 
+.clearfix {
+    display:block;
+}
+
+.iconbb {
+  float: left;
+  margin-left: 35px;
+  margin-right: 2px;
+  margin-top: 10px;
+  margin-bottom: 20px;
+  padding-left: 3%;
+  width: 25%;
+} 
+
+
+.textbb {
+    
+    padding-left: 4%;
+    width: auto;
+} 
+
+
+
+		</style>
 	</head>
 	<body class="is-preload">
 
 		<!-- Header -->
 			<header id="header">
-				<a href="index.html" class="title">Hyperspace</a>
+				<a href="index.html" class="title">Biram Bawo</a>
 				<nav>
 					<ul>
 						<li><a href="index.html">Home</a></li>
-						<li><a href="generic.html" class="active">Generic</a></li>
-						<li><a href="elements.html">Elements</a></li>
+						<li><a href="generic.html" class="active">Project Description</a></li>
+						<li><a href="elements.html">Code</a></li>
 					</ul>
 				</nav>
 			</header>
@@ -32,17 +69,64 @@
 				<!-- Main -->
 					<section id="main" class="wrapper">
 						<div class="inner">
-							<h1 class="major">The Robot - Taxi</h1>
-							<span class="image fit"><img src="images/pic04.jpg" alt="" /></span>
-							<p>In this project I worked on building a self-driving taxi. As the name suggests, the purpose of the taxi was to autonomously navigate a multi-routed track, recognize traffic signs and taxi passengers
-								from pick-up to drop-off locations using the 2D coordinates of which were communicated wirelessly</p>
-							<p>As you can imagine, the project was was not a straight foward one as I had to learn by doing.I used a convolutional neural network to teach the car to steer itself on the track. I obtained my training data by using the camera frames from the raspberry pi camera as input and the steering angle of the rc car as output.
-								Details of the project including the code can be found here.
-							</p>
+							
+							
+							
 						</div>
+						
+						
+						
 					</section>
+					
+					
+					
+					
+					
+					
+
+
 
 			</div>
+			
+			
+			
+			
+  
+<div class="clearfix">
+  <div class="iconbb">
+    <img class="aligncenter size-full wp-image-19768" src="images/map.JPG" alt="one" width="250" height="200" />
+    <img class="aligncenter size-full wp-image-19768" src="images/img_1.JPG" alt="one" width="250" height="200" />
+    <img class="aligncenter size-full wp-image-19768" src="images/img_2.jpg" alt="one" width="250" height="200" />
+  </div>
+
+  <div class="textbb">
+      <h1 class="major">The Robot - Taxi</h1>
+        <p>This project kicked-off  when I took part in the Teknofest Istanbul competition in 2018 and continued it as my graduation project. 
+			The goal was to build a self-driving taxi. The purpose of the taxi was to autonomously navigate a multi-routed track, recognize traffic 
+			signs and taxi passengers from pick-up to drop-off locations using the 2D coordinates of which were communicated wirelessly by the passenger
+			</p>
+		
+		<p>I used keras (tensorflow) to train two convolutional neural networks; one to steer the car on the track and the other to detect traffic 
+			symbols. I obtained training data for the steering task by using opencv to read the video frames from a front-facing raspberry pi camera 
+			as input and the steering angle of the rc car as output. The steering angle of the rc car was harnessed by connecting an arduino to the 
+			rc receiver to read the pulse values from the transmitter and mapping them to some range. 
+							</p>
+							
+							<p>Owing to the imprecise nature of modern GPS devices for localization on the track, I turned to using a graph model.
+								 With the entire track known, I approximated it into a finite amount of straight lines, connected at intersections,
+								 which served as reference points with known coordinates. The exact location of the robot reduced to a linear approximation
+								  from the last reference point, and the optimal path to a location reduced to a minimum distance graph problem, which was 
+								  implemented using the bellman ford algorithm, with the euclidean distance between intersections serving as the weights.
+								   With the robot trained to run at a constant speed, it was able to compare the distance it had covered with respect to
+								    time to the distance outputted by the graph and thereby estimate its exact location on the track.
+							</p>
+							<p>The project taught me the fundamentals of deep learning, computer vision, graph data structures and mobile robot dynamics. </p>
+							
+							<a href="https://github.com/bbawo/Robot---Taxi" target="_blank" style='float:right;margin-right:20px' class="button primary">SOURCE CODE</a>
+							
+  </div>
+</div>
+
 
 		<!-- Footer -->
 			<footer id="footer" class="wrapper alt">
