@@ -1,0 +1,132 @@
+<!DOCTYPE HTML>
+<!--
+	Hyperspace by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+	<head>
+		<title>Generic - Hyperspace by HTML5 UP</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<!-- Header -->
+			<header id="header">
+				<a href="index.html" class="title">Biram Bawor</a>
+				<nav>
+					<ul>
+						<li><a href="index.html">Home</a></li>
+						<li><a href="projects.html" class="active">Project Description</a></li>
+						<li><a href="code.html">Code</a></li>
+					</ul>
+				</nav>
+			</header>
+
+		<!-- Wrapper -->
+			<div id="wrapper">
+
+				<!-- Main -->
+					<section id="main" class="wrapper mywrapper">
+						
+						
+						<h2>The Robot - Taxi</h2>
+							
+						<div class="container">
+						<div class="column-1 box">
+						<ul style="list-style-type: none;">
+												<li><img src="images/pic09.jpeg" alt="one" width="250" height="180" />
+												</li>
+												<li><img src="images/pic10.jpeg" alt="one" width="250" height="180" />
+												</li>
+												<li><img src="images/pic11.jpeg" alt="one" width="250" height="180" />
+												</li>
+											</ul>
+						</div>
+						<div class="column-2 box">
+						<ul style="list-style-type: none;">
+												<li> <p>
+												    This project kicked-off when I took part in the Teknofest Istanbul competition in 2018 
+													and continued it as my graduation project. The goal was to build a self-driving taxi. 
+													The purpose of the taxi was to autonomously navigate a multi-routed track, recognize 
+													traffic signs and taxi passengers from pick-up to drop-off locations using the 2D 
+													coordinates of which were communicated wirelessly by the passenger</p></li>
+		
+													<li><p>I used keras (tensorflow) to train two convolutional neural networks; one to steer 
+													the car on the track and the other to detect traffic symbols. I obtained training data 
+													for the steering task by using opencv to read the video frames from a front-facing raspberry
+													pi camera as input and the steering angle of the rc car as output. The steering angle
+													of the rc car was harnessed by connecting an arduino to the rc receiver to read the 
+													pulse values from the transmitter and mapping them to some range.</p>
+													</li>
+													
+													<li><p>Owing to the imprecise nature of modern GPS devices for localization on the track,
+													I turned to using a graph model. With the entire track known, I approximated it into
+													a finite amount of straight lines, connected at intersections, which served as 
+													reference points with known coordinates. The exact location of the robot reduced 
+													to a linear approximation from the last reference point, and the optimal path to 
+													a location reduced to a minimum distance graph problem, which was implemented using 
+													the bellman ford algorithm, with the euclidean distance between intersections serving
+													as the weights. With the robot trained to run at a constant speed, it was able to 
+													compare the distance it had covered with respect to time to the distance outputted 
+													by the graph and thereby estimate its exact location on the track.</p>
+													</li>
+													
+													<li><p>The project taught me the fundamentals of deep learning, computer vision, 
+													graph data structures and mobile robot dynamics.</p>
+													</li>
+												
+											</ul>
+											
+									    <a href="code.html" target="_blank"  class="button primary">Source Code</a>
+
+    </div>
+</div>		
+									
+						
+				
+
+						
+					</section>
+					
+					
+					
+	
+					
+
+			</div>
+
+
+
+
+
+		<!-- Footer -->
+			<footer id="footer" class="wrapper alt">
+				<div class="inner">
+					<ul class="menu">
+						<li>&copy; Untitled. All rights reserved.</li><li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
+					</ul>
+				</div>
+			</footer>
+
+
+
+
+
+
+
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/jquery.scrollex.min.js"></script>
+			<script src="assets/js/jquery.scrolly.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>
