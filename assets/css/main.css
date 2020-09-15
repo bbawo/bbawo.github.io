@@ -3908,8 +3908,18 @@ input, select, textarea {
 
 		}
 		
+		
+		
+		.phone {
+					
+					display: none;
+				}
 	@media screen and (max-width: 1280px) {
 
+
+
+				
+				
 				#sidebar {
 				height: 35% !important;	
 				}
@@ -3975,13 +3985,44 @@ input, select, textarea {
 				
 				}
 		
-		
+		@media screen and (max-width: 736px) {
+
+				
+				.pagelinks{
+					
+					display:none !important;
+					
+							}}
 		
 		
 		@media screen and (max-width: 736px) {
 
+				
+				.laptop {
+					
+					display : none;
+				}
+				
+				.phone {
+					
+					display: block;
+				}
+				.mycv {
+					
+					
+					width : 100%;
+					padding-left : 0% !important;
+					
+				}
+				
+				
+				.pagelinks{
+					
+					display:none;
+					
+				}
 				#sidebar {
-				height: 45% !important;	
+				height: 30% !important;	
 				}
 				
 				.inner {
@@ -3990,8 +4031,8 @@ input, select, textarea {
 				}
 				.circular--portrait {
 				position: relative;
-				width: 200px;
-				height: 200px;
+				width: 150px;
+				height: 150px;
 				overflow: hidden;
 				border-radius: 50%;
 				margin-bottom : 5%;
@@ -4110,6 +4151,43 @@ input, select, textarea {
 
 
 
+				.mycv {
+					
+					
+					width : 100%;
+					
+					
+				}
+
+
+html {
+  --scrollbarBG: #CFD8DC;
+  --thumbBG: #90A4AE;
+}
+body::-webkit-scrollbar {
+  width: 11px;
+}
+body {
+  scrollbar-width: thin;
+  scrollbar-color: var(--thumbBG) var(--scrollbarBG);
+}
+body::-webkit-scrollbar-track {
+  background: var(--scrollbarBG);
+}
+body::-webkit-scrollbar-thumb {
+  background-color: var(--thumbBG) ;
+  border-radius: 6px;
+  border: 3px solid var(--scrollbarBG);
+}
+
+
+
+				.mylink {
+				
+				opacity : 1 !important;
+				color : white !important;
+				display : initial !important;
+				}
 
 
 
@@ -4117,4 +4195,15 @@ input, select, textarea {
 
 
 
-
+section {
+  scrollbar-width: thin;
+  scrollbar-color: var(--thumbBG) var(--scrollbarBG);
+}
+section::-webkit-scrollbar-track {
+  background: var(--scrollbarBG);
+}
+section::-webkit-scrollbar-thumb {
+  background-color: var(--thumbBG) ;
+  border-radius: 6px;
+  border: 3px solid var(--scrollbarBG);
+}
